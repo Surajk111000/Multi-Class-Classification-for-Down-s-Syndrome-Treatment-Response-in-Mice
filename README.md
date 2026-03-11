@@ -1,16 +1,122 @@
-# Mice Protein Expression Classification API
+# 🧬 Mice Protein Expression Classification API
 
 Multi-Class Classification for Down's Syndrome Treatment Response in Mice
 
-## Overview
+## 🚀 Live Demo
 
-This FastAPI-based ML inference interface supports CSV batch uploads for mice gene-expression data with automated preprocessing (feature validation, scaling, and PCA reduction to 37 features).
+**Try the API now:** https://multi-class-classification-for-down-s.onrender.com/docs
 
-The project integrates and evaluates SVM, Neural Network, Random Forest, and Logistic Regression models in a unified prediction pipeline, enforcing feature-schema alignment and achieving:
-- **88.4% accuracy** for binary classification
-- **74.2% accuracy** for multi-class classification
+👆 Click the link above to:
+- ✅ View interactive Swagger documentation
+- ✅ See all available endpoints
+- ✅ Test predictions with sample data
+- ✅ Download responses directly
 
-## Project Structure
+**Status:** ✓ 8 ML models loaded | ✓ Production ready | ✓ Free tier hosting
+
+---
+
+## 📊 Overview
+
+This FastAPI-based ML inference interface supports:
+- **Single predictions** - Classify one mice sample
+- **Batch predictions** - Classify multiple samples at once
+- **CSV uploads** - Process multiple rows from a CSV file
+- **Automated preprocessing** - Feature validation, scaling, and PCA reduction (77→37 features)
+
+**Models included:** SVM, Neural Network (MLP), Random Forest, Logistic Regression
+
+**Accuracy:**
+- ✅ **Binary classification:** 96.72%
+- ✅ **Multi-class classification:** 97.64%
+
+---
+
+## ⚡ Quick Start (30 seconds)
+
+### Option 1: Interactive Swagger UI (Easiest)
+1. Go to: https://multi-class-classification-for-down-s.onrender.com/docs
+2. Click on `/predict` or `/batch_predict`
+3. Click "Try it out"
+4. See pre-filled sample data with 77 features
+5. Click "Execute" → Get predictions instantly! 🎉
+
+### Option 2: Sample POST API Calls
+
+**Single Prediction - `/predict`**
+```json
+{
+  "features": [
+    0.503, -0.196, 0.23, -0.226, -0.186, -0.107, -0.035, -0.052, -0.064, 0.006,
+    -0.132, -0.156, -0.121, -0.178, -0.146, -0.241, -0.103, 0.041, 0.195, 0.223,
+    0.106, 0.187, 0.245, 0.156, 0.089, 0.121, 0.134, 0.178, 0.164, 0.129,
+    0.087, 0.145, 0.156, 0.198, 0.234, 0.201, 0.167, 0.145, 0.176, 0.198,
+    0.134, 0.156, 0.178, 0.201, 0.089, 0.112, 0.145, 0.134, 0.167, 0.189,
+    0.156, 0.178, 0.145, 0.123, 0.167, 0.198, 0.156, 0.134, 0.189, 0.167,
+    0.145, 0.178, 0.201, 0.156, -0.089, -0.145, -0.123, -0.087, -0.112, -0.134,
+    -0.156, -0.178, -0.167, 0.234, 0.156, 0.145, 0.189
+  ],
+  "model_type": "svm",
+  "classification_type": "binary"
+}
+```
+
+**Batch Predictions - `/batch_predict`** (same structure, features is 2D array)
+
+**CSV Upload - `/csv_predict`**
+- Download sample: [sample_data_77_noheaders.csv](sample_data_77_noheaders.csv)
+- Upload to: `/csv_predict?model_type=svm&classification_type=binary`
+
+---
+
+## 📋 Feature Columns (77 Total)
+
+All 77 features must be provided as numeric values:
+
+**Columns 1-75: Protein Measurements**
+```
+DYRK1A_N, ITSN1_N, CRMP3_N, CRMP5_N, Calcineurin_N, REST_N, NR1_N, NR2A_N, 
+NR2B_N, PSD95_N, SAP102_N, NMDA_N, pNR1_N, pNR2A_N, pNR2B_N, pPSD95_N, 
+PSD95_c, NMDAR_c, pNMDAR_c, pC3_N, SynRas_N, SynGAP_N, pSynGAP_N, SynGAPc_N, 
+Raf_N, pC3_c, RasGRF1_N, ERK_N, pERK_N, MeCP2_N, pMeCP2_N, MeCP2_c, pMeCP2_c, 
+MBP_N, GFAP_N, GluR3_N, GluR4_N, IL1B_N, p38_N, pp38_N, SYP_N, H3AcK9_N, 
+H3MeK4_N, H4AcK12_N, CaNA_N, Ubiquitin_N, pGSK3B_N, ActiveGSK3B_N, total_Tau_N, 
+pTau_N, GFAP_c, GluR3_c, IL1B_c, Snca_N, Tau_N, pTau181_N, pTau217_N, pTau181c_N, 
+pTau217c_N, APP_N, pAPP_c, Cathepsin_N, BACE_N, pBADc_N, BADc_N, pSynGAP_c, 
+PSD95c_N, EGR1_N, EGR1_c, H3MeK4_c, H4AcK12c_N, H4AcK12c_c, SYP_c
+```
+
+**Columns 76-77: Metadata**
+```
+Genotype, Treatment
+```
+
+📄 **Full reference:** [COLUMN_REFERENCE.csv](COLUMN_REFERENCE.csv)
+
+---
+
+## 🎯 Available Models & Types
+
+| Model | Binary | Multi-class |
+|-------|--------|-------------|
+| SVM | ✅ svm_binary | ✅ svm_4class |
+| Random Forest | ✅ rf_binary | ✅ rf_4class |
+| Neural Network (MLP) | ✅ mlp_binary | ✅ mlp_4class |
+| Logistic Regression | ✅ logreg_binary | ✅ logreg_4class |
+
+---
+
+## 📂 Input Files
+
+| File | Purpose | Format |
+|------|---------|--------|
+| [sample_data_77_noheaders.csv](sample_data_77_noheaders.csv) | Test CSV data for batch processing | 4 rows × 77 columns (no headers) |
+| [COLUMN_REFERENCE.csv](COLUMN_REFERENCE.csv) | Column definitions with sample ranges | All 77 columns described |
+| [API_SAMPLE_INPUTS.md](API_SAMPLE_INPUTS.md) | Complete API usage examples | JSON, cURL, Python |
+
+---
+
+## 📚 Project Structure
 
 ```
 .
