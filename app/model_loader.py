@@ -26,6 +26,8 @@ class ModelLoader:
         """Initialize model loader"""
         if not hasattr(self, '_initialized'):
             self._initialized = True
+            self._models = {}
+            self._pca = None
             self.load_all_models()
 
     def load_all_models(self) -> None:

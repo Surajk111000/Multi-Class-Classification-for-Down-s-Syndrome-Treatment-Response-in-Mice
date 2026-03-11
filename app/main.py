@@ -53,16 +53,27 @@ async def startup_event():
 @app.get("/", tags=["Info"])
 async def root():
     """Root endpoint with API information"""
+    model_loader = ModelLoader()
+    available_models = model_loader.get_available_models()
+    
+    if not available_models:
+        models_msg = "⚠️ No models loaded. Run: python quick_train.py"
+    else:
+        models_msg = f"✓ {len(available_models)} models loaded"
+    
     return {
         "message": "Mice Protein Expression Classification API",
         "version": "1.0.0",
         "description": "Multi-Class Classification for Down's Syndrome Treatment Response in Mice",
+        "status": models_msg,
         "endpoints": {
             "health": "/health",
             "predict": "/predict",
             "batch_predict": "/batch_predict",
-            "csv_upload": "/csv_upload"
-        }
+            "csv_upload": "/csv_upload",
+            "docs": "/docs"
+        },
+        "quick_start": "Run: python quick_train.py (first time only)"
     }
 
 
@@ -100,10 +111,15 @@ async def predict_single(request: SinglePredictionRequest):
     ```
     """
     try:
-        # Validate model and classification type
-        available_models = ModelLoader().get_available_models()
-        model_name = f"{request.model_type}_{request.classification_type}"
+        # Check if models are loaded
+        model_loader = ModelLoader()
+        if not model_loader.get_available_models():
+            raise HTTPException(
+                status_code=503,
+                detail="Models not loaded. Please run: python quick_train.py"
+            )
         
+        # Validate model and classification type
         if request.model_type not in ['svm', 'rf', 'mlp', 'logreg']:
             raise ValueError(f"Invalid model type. Choose from: svm, rf, mlp, logreg")
         
@@ -122,6 +138,8 @@ async def predict_single(request: SinglePredictionRequest):
             classification_type=request.classification_type,
             confidence=confidence
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -147,6 +165,14 @@ async def batch_predict(request: PredictionRequest):
     ```
     """
     try:
+        # Check if models are loaded
+        model_loader = ModelLoader()
+        if not model_loader.get_available_models():
+            raise HTTPException(
+                status_code=503,
+                detail="Models not loaded. Please run: python quick_train.py"
+            )
+        
         # Validate inputs
         if not request.features:
             raise ValueError("Features list cannot be empty")
@@ -169,6 +195,8 @@ async def batch_predict(request: PredictionRequest):
             classification_type=request.classification_type,
             confidence=confidence
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Batch prediction error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
