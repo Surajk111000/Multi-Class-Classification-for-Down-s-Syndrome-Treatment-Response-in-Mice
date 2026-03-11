@@ -2,10 +2,13 @@
 FastAPI application for Mice Protein Expression Classification
 Multi-Class Classification for Down's Syndrome Treatment Response in Mice
 """
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from typing import List
+import io
+import csv
+import pandas as pd
 
 from app.schemas import (
     PredictionRequest,
@@ -123,7 +126,7 @@ async def predict_single(request: SinglePredictionRequest):
         if request.classification_type not in ['binary', 'multiclass']:
             raise ValueError(f"Invalid classification type. Choose from: binary, multiclass")
         
-        predictions, confidence = make_predictions(
+        predictions, _ = make_predictions(
             [request.features],
             request.model_type,
             request.classification_type
@@ -132,8 +135,7 @@ async def predict_single(request: SinglePredictionRequest):
         return PredictionResponse(
             predictions=predictions,
             model_used=f"{request.model_type}_{request.classification_type}",
-            classification_type=request.classification_type,
-            confidence=confidence
+            classification_type=request.classification_type
         )
     except HTTPException:
         raise
@@ -180,7 +182,7 @@ async def batch_predict(request: PredictionRequest):
         if request.classification_type not in ['binary', 'multiclass']:
             raise ValueError(f"Invalid classification type. Choose from: binary, multiclass")
         
-        predictions, confidence = make_predictions(
+        predictions, _ = make_predictions(
             request.features,
             request.model_type,
             request.classification_type
@@ -189,8 +191,7 @@ async def batch_predict(request: PredictionRequest):
         return PredictionResponse(
             predictions=predictions,
             model_used=f"{request.model_type}_{request.classification_type}",
-            classification_type=request.classification_type,
-            confidence=confidence
+            classification_type=request.classification_type
         )
     except HTTPException:
         raise
@@ -210,6 +211,76 @@ async def get_available_models():
         "total_models": len(available_models),
         "note": "CSV upload endpoint is available with 'python-multipart' installed"
     }
+
+
+@app.post("/csv_predict", tags=["Predictions"])
+async def csv_predict(
+    file: UploadFile = File(...),
+    model_type: str = Query("svm", description="Model: svm, rf, mlp, logreg"),
+    classification_type: str = Query("binary", description="Type: binary or multiclass")
+):
+    """
+    Predict from CSV file
+    
+    - CSV Format: Each row is a sample with exactly 77 numeric features (no headers needed)
+    - model_type: Choose from 'svm', 'rf', 'mlp', 'logreg'
+    - classification_type: Choose from 'binary' or 'multiclass'
+    
+    Returns predictions for all rows in CSV
+    """
+    try:
+        # Validate model and classification type
+        if model_type not in ['svm', 'rf', 'mlp', 'logreg']:
+            raise ValueError(f"Invalid model type. Choose from: svm, rf, mlp, logreg")
+        
+        if classification_type not in ['binary', 'multiclass']:
+            raise ValueError(f"Invalid classification type. Choose from: binary, multiclass")
+        
+        # Read CSV file
+        contents = await file.read()
+        csv_text = contents.decode('utf-8')
+        
+        # Parse CSV
+        csv_reader = csv.reader(io.StringIO(csv_text))
+        rows = list(csv_reader)
+        
+        if not rows:
+            raise ValueError("CSV file is empty")
+        
+        # Convert to float arrays
+        features_list = []
+        for idx, row in enumerate(rows):
+            try:
+                features = [float(x.strip()) for x in row if x.strip()]
+                if len(features) != 77:
+                    raise ValueError(f"Row {idx+1}: Expected 77 features, got {len(features)}")
+                features_list.append(features)
+            except ValueError as e:
+                raise ValueError(f"Row {idx+1}: {str(e)}")
+        
+        if not features_list:
+            raise ValueError("No valid data rows in CSV")
+        
+        # Make predictions
+        predictions, confidence = make_predictions(
+            features_list,
+            model_type,
+            classification_type
+        )
+        
+        return {
+            "status": "success",
+            "rows_processed": len(features_list),
+            "predictions": predictions,
+            "confidence": confidence,
+            "model_used": f"{model_type}_{classification_type}",
+            "classification_type": classification_type
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"CSV prediction error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 if __name__ == "__main__":
