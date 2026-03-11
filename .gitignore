@@ -135,5 +135,6 @@ MouseTest.csv
 .csv
 
 # Model files (large)
-models/saved_models/*.pkl
+# Allow trained models to be deployed
+# models/saved_models/*.pkl
 !models/saved_models/.gitkeep
