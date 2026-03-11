@@ -15,6 +15,7 @@ class ModelLoader:
     _instance = None
     _models = {}
     _pca = None
+    _imputer = None
 
     def __new__(cls):
         """Singleton pattern to ensure only one instance"""
@@ -28,6 +29,7 @@ class ModelLoader:
             self._initialized = True
             self._models = {}
             self._pca = None
+            self._imputer = None
             self.load_all_models()
 
     def load_all_models(self) -> None:
@@ -75,6 +77,18 @@ class ModelLoader:
         except Exception as e:
             logger.error(f"Error loading PCA: {str(e)}")
 
+        # Load Imputer
+        imputer_path = os.path.join(models_dir, 'imputer.pkl')
+        try:
+            if os.path.exists(imputer_path):
+                with open(imputer_path, 'rb') as f:
+                    self._imputer = pickle.load(f)
+                logger.info("Loaded Imputer")
+            else:
+                logger.warning(f"Imputer file not found: {imputer_path}")
+        except Exception as e:
+            logger.error(f"Error loading Imputer: {str(e)}")
+
     @classmethod
     def get_model(cls, model_name: str):
         """Get a specific model by name"""
@@ -86,6 +100,12 @@ class ModelLoader:
         """Get the PCA transformer"""
         instance = cls()
         return instance._pca
+
+    @classmethod
+    def get_imputer(cls):
+        """Get the Imputer"""
+        instance = cls()
+        return instance._imputer
 
     @classmethod
     def get_all_models(cls) -> Dict:

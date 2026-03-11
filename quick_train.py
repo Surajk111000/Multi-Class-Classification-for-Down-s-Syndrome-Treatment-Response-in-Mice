@@ -110,7 +110,8 @@ def train_quick():
         'mlp_4class.pkl': mlp_4class,
         'svm_4class.pkl': svm_4class,
         'rf_4class.pkl': rf_4class,
-        'pca_37.pkl': pca
+        'pca_37.pkl': pca,
+        'imputer.pkl': imputer
     }
     
     for filename, model in models_to_save.items():

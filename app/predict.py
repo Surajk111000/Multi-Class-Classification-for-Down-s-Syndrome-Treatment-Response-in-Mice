@@ -16,29 +16,39 @@ class Predictor:
 
     def __init__(self):
         self.model_loader = ModelLoader()
-        self.imputer = SimpleImputer(strategy='mean')
+        self.imputer = self.model_loader.get_imputer()
+        if self.imputer is None:
+            logger.warning("Imputer not loaded, using fallback")
+            self.imputer = SimpleImputer(strategy='mean')
 
     def preprocess_features(self, X: np.ndarray) -> np.ndarray:
         """
         Preprocess features: handle missing values and apply PCA
         
         Args:
-            X: Input features array (n_samples, n_features)
+            X: Input features array (n_samples, 77) - expects 77 raw protein features
             
         Returns:
-            Preprocessed features after PCA reduction
+            Preprocessed features after PCA reduction (n_samples, 37)
         """
-        # Handle missing values
-        X_imputed = self.imputer.fit_transform(X)
+        # Validate input shape
+        if X.shape[1] != 77:
+            raise ValueError(f"Expected 77 features, got {X.shape[1]}. Input must have 77 raw protein features.")
         
-        # Apply PCA
+        # Handle missing values using pre-fitted imputer from training
+        if self.imputer is not None:
+            X_imputed = self.imputer.transform(X)
+        else:
+            logger.warning("Imputer not available, skipping imputation")
+            X_imputed = X
+        
+        # Apply PCA transformation
         pca = self.model_loader.get_pca()
         if pca is not None:
             X_transformed = pca.transform(X_imputed)
             return X_transformed
         else:
-            logger.warning("PCA not available, returning imputed features")
-            return X_imputed
+            raise ValueError("PCA transformer not loaded")
 
     def predict(
         self,
